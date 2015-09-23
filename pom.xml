@@ -9,7 +9,7 @@
 
 	<groupId>org.omnifaces</groupId>
 	<artifactId>omnifaces-security-jaspic-undertow</artifactId>
-	<version>1.0</version>
+	<version>10.0.0.CR1</version>
 	<packaging>jar</packaging>
 	
 	<name>omnisecurity JASPIC Undertow</name>
@@ -70,14 +70,14 @@
 			<!-- Undertow version for which the patch at least works. -->
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-servlet</artifactId>
-			<version>1.2.9.Final</version>
+			<version>1.3.0.CR1</version>
 			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>org.wildfly</groupId>
 			<artifactId>wildfly-undertow</artifactId>
-			<version>9.0.1.Final</version>
+			<version>10.0.0.CR1</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

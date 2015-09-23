@@ -23,9 +23,12 @@ import org.jboss.security.config.ApplicationPolicy;
 import org.jboss.security.config.SecurityConfiguration;
 import org.wildfly.extension.undertow.security.JAASIdentityManagerImpl;
 import org.wildfly.extension.undertow.security.jaspi.JASPIAuthenticationMechanism;
+import org.wildfly.extension.undertow.security.jaspi.JASPICInitialHandler;
 import org.wildfly.extension.undertow.security.jaspi.JASPICSecurityContextFactory;
 
 import io.undertow.security.idm.IdentityManager;
+import io.undertow.server.HandlerWrapper;
+import io.undertow.server.HttpHandler;
 import io.undertow.servlet.api.DeploymentInfo;
 
 /**
@@ -77,8 +80,17 @@ public class JaspicActivator {
 		JASPIAuthenticationInfo authenticationInfo = new JASPIAuthenticationInfo(securityDomain);
 		applicationPolicy.setAuthenticationInfo(authenticationInfo);
 		SecurityConfiguration.addApplicationPolicy(applicationPolicy);
+		
+		final String finalSecurityDomain = securityDomain;
+		
+		deploymentInfo.addSecurityWrapper(new HandlerWrapper() {
+			@Override
+			public HttpHandler wrap(HttpHandler handler) {
+				return new JASPICInitialHandler(finalSecurityDomain, handler);
+			}
+		});
 
-		deploymentInfo.setJaspiAuthenticationMechanism(new JASPIAuthenticationMechanism(securityDomain, null));
+		deploymentInfo.setJaspiAuthenticationMechanism(new JASPIAuthenticationMechanismX(securityDomain, null));
 		deploymentInfo.setSecurityContextFactory(new JASPICSecurityContextFactory(securityDomain));
 		
 		return deploymentInfo;
