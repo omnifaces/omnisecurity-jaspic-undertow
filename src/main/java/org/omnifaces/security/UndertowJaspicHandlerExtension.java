@@ -26,10 +26,10 @@ import io.undertow.servlet.api.DeploymentInfo;
  * @author Arjan Tijms
  *
  */
-public class UndertowHandlerExtension implements ServletExtension {
+public class UndertowJaspicHandlerExtension implements ServletExtension {
 
 	@Override
 	public void handleDeployment(final DeploymentInfo deploymentInfo, final ServletContext servletContext) {
-		activateJaspic(deploymentInfo);	
+		activateJaspic(deploymentInfo);
 	}
 }

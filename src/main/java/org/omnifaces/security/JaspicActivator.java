@@ -13,8 +13,10 @@
 
 package org.omnifaces.security;
 
+import static java.util.logging.Level.INFO;
+import static java.util.logging.Level.SEVERE;
+
 import java.lang.reflect.Field;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jboss.as.security.plugins.SecurityDomainContext;
@@ -22,14 +24,13 @@ import org.jboss.security.auth.login.JASPIAuthenticationInfo;
 import org.jboss.security.config.ApplicationPolicy;
 import org.jboss.security.config.SecurityConfiguration;
 import org.wildfly.extension.undertow.security.JAASIdentityManagerImpl;
-import org.wildfly.extension.undertow.security.jaspi.JASPIAuthenticationMechanism;
-import org.wildfly.extension.undertow.security.jaspi.JASPICInitialHandler;
+import org.wildfly.extension.undertow.security.jaspi.JASPICAuthenticationMechanism;
+import org.wildfly.extension.undertow.security.jaspi.JASPICSecureResponseHandler;
 import org.wildfly.extension.undertow.security.jaspi.JASPICSecurityContextFactory;
 
 import io.undertow.security.idm.IdentityManager;
-import io.undertow.server.HandlerWrapper;
-import io.undertow.server.HttpHandler;
 import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.LoginConfig;
 
 /**
  * This is a hack to activate JASPIC for JBoss WildFly 8.2+. It replaces the hack with the dummy domain
@@ -72,26 +73,26 @@ public class JaspicActivator {
 				securityDomain = securityDomainContext.getAuthenticationManager().getSecurityDomain();
 
 			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-				logger.log(Level.SEVERE, "Can't obtain name of security domain, using 'other' now", e);
+				logger.log(SEVERE, "Can't obtain name of security domain, using 'other' now", e);
 			}
 		}
+		
+		logger.log(INFO, "JaspicActivator using security domain:" + securityDomain);
 
 		ApplicationPolicy applicationPolicy = new ApplicationPolicy(securityDomain);
 		JASPIAuthenticationInfo authenticationInfo = new JASPIAuthenticationInfo(securityDomain);
 		applicationPolicy.setAuthenticationInfo(authenticationInfo);
 		SecurityConfiguration.addApplicationPolicy(applicationPolicy);
 		
-		final String finalSecurityDomain = securityDomain;
+		String authMethod = null;
+		LoginConfig loginConfig = deploymentInfo.getLoginConfig();
+		if (loginConfig != null && loginConfig.getAuthMethods().size() > 0) {
+			authMethod = loginConfig.getAuthMethods().get(0).getName();
+		}
 		
-		deploymentInfo.addSecurityWrapper(new HandlerWrapper() {
-			@Override
-			public HttpHandler wrap(HttpHandler handler) {
-				return new JASPICInitialHandler(finalSecurityDomain, handler);
-			}
-		});
-
-		deploymentInfo.setJaspiAuthenticationMechanism(new JASPIAuthenticationMechanismX(securityDomain, null));
-		deploymentInfo.setSecurityContextFactory(new JASPICSecurityContextFactory(securityDomain));
+		deploymentInfo.setJaspiAuthenticationMechanism(new JASPICAuthenticationMechanismX(securityDomain, authMethod));
+        deploymentInfo.setSecurityContextFactory(new JASPICSecurityContextFactory(securityDomain));
+        deploymentInfo.addOuterHandlerChainWrapper(next -> new JASPICSecureResponseHandler(next));
 		
 		return deploymentInfo;
 	}
